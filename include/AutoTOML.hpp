@@ -10,6 +10,8 @@
 
 namespace AutoTOML
 {
+	using namespace std::literals;
+
 	using boolean_t = bool;
 	using float_t = double;
 	using integer_t = std::int64_t;
@@ -35,16 +37,13 @@ namespace AutoTOML
 		ISetting& operator=(const ISetting&) = delete;
 		ISetting& operator=(ISetting&&) = delete;
 
-		static std::vector<ISetting*>& get_settings()
+		[[nodiscard]] static inline std::vector<ISetting*>& get_settings() noexcept
 		{
 			static std::vector<ISetting*> settings;
 			return settings;
 		}
 
-		inline void load(const toml::table& a_table)
-		{
-			do_load(a_table);
-		}
+		inline void load(const toml::table& a_table) { do_load(a_table); }
 
 	protected:
 		[[nodiscard]] constexpr const string_t& group() const noexcept { return _group; }
@@ -60,7 +59,8 @@ namespace AutoTOML
 	namespace detail
 	{
 		template <class T>
-		class tSetting : ISetting
+		class tSetting :
+			public ISetting
 		{
 		private:
 			using super = ISetting;
@@ -110,7 +110,7 @@ namespace AutoTOML
 			}
 
 		protected:
-			void do_load(const toml::table& a_table) override
+			inline void do_load(const toml::table& a_table) override
 			{
 				const auto& node = a_table[group()][key()];
 				const auto val = node.as<value_type>();
@@ -120,16 +120,17 @@ namespace AutoTOML
 					string_t err;
 					err += '[';
 					err += group();
-					err += "] ";
+					err += "] "sv;
 					err += key();
-					err += ": value is not ";
+					err += ": value is not "sv;
 					if (!node) {
-						err += "found";
+						err += "found"sv;
 					} else if (!val) {
-						err += "of expected type";
+						err += "of expected type"sv;
 					} else {
-						err += "<UNKNOWN ERROR>";
+						err += "<UNKNOWN ERROR>"sv;
 					}
+
 					throw std::runtime_error(err);
 				}
 			}

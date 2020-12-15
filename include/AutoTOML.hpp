@@ -43,13 +43,14 @@ namespace AutoTOML
 			return settings;
 		}
 
-		inline void load(const toml::table& a_table) { do_load(a_table); }
-
-	protected:
 		[[nodiscard]] constexpr const string_t& group() const noexcept { return _group; }
 		[[nodiscard]] constexpr const string_t& key() const noexcept { return _key; }
+		inline void load(const toml::table& a_table) { do_load(a_table); }
+		[[nodiscard]] toml::node_type type() const noexcept { return do_type(); }
 
+	protected:
 		virtual void do_load(const toml::table& a_table) = 0;
+		[[nodiscard]] virtual toml::node_type do_type() const noexcept = 0;
 
 	private:
 		string_t _group;
@@ -58,7 +59,9 @@ namespace AutoTOML
 
 	namespace detail
 	{
-		template <class T>
+		template <
+			class T,
+			toml::node_type E>
 		class tSetting :
 			public ISetting
 		{
@@ -86,8 +89,8 @@ namespace AutoTOML
 			tSetting& operator=(const tSetting&) = delete;
 			tSetting& operator=(tSetting&&) = delete;
 
-			[[nodiscard]] constexpr reference operator*() noexcept { return _value; }
-			[[nodiscard]] constexpr const_reference operator*() const noexcept { return _value; }
+			[[nodiscard]] constexpr reference operator*() noexcept { return get(); }
+			[[nodiscard]] constexpr const_reference operator*() const noexcept { return get(); }
 
 			template <
 				class U = value_type,
@@ -96,7 +99,7 @@ namespace AutoTOML
 					int> = 0>
 			[[nodiscard]] constexpr pointer operator->() noexcept
 			{
-				return std::addressof(_value);
+				return std::addressof(get());
 			}
 
 			template <
@@ -106,8 +109,11 @@ namespace AutoTOML
 					int> = 0>
 			[[nodiscard]] constexpr const_pointer operator->() const noexcept
 			{
-				return std::addressof(_value);
+				return std::addressof(get());
 			}
+
+			[[nodiscard]] constexpr reference get() noexcept { return _value; }
+			[[nodiscard]] constexpr const_reference get() const noexcept { return _value; }
 
 		protected:
 			inline void do_load(const toml::table& a_table) override
@@ -135,13 +141,15 @@ namespace AutoTOML
 				}
 			}
 
+			[[nodiscard]] toml::node_type do_type() const noexcept override { return E; }
+
 		private:
 			value_type _value;
 		};
 	}
 
-	using bSetting = detail::tSetting<boolean_t>;
-	using fSetting = detail::tSetting<float_t>;
-	using iSetting = detail::tSetting<integer_t>;
-	using sSetting = detail::tSetting<string_t>;
+	using bSetting = detail::tSetting<boolean_t, toml::node_type::boolean>;
+	using fSetting = detail::tSetting<float_t, toml::node_type::floating_point>;
+	using iSetting = detail::tSetting<integer_t, toml::node_type::integer>;
+	using sSetting = detail::tSetting<string_t, toml::node_type::string>;
 }

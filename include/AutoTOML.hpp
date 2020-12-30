@@ -24,7 +24,7 @@ namespace AutoTOML
 		ISetting(const ISetting&) = delete;
 		ISetting(ISetting&&) = delete;
 
-		inline ISetting(string_t a_group, string_t a_key) :
+		ISetting(string_t a_group, string_t a_key) :
 			_group(std::move(a_group)),
 			_key(std::move(a_key))
 		{
@@ -32,12 +32,12 @@ namespace AutoTOML
 			settings.push_back(this);
 		}
 
-		inline virtual ~ISetting() = 0 {}
+		virtual ~ISetting() = 0 {}
 
 		ISetting& operator=(const ISetting&) = delete;
 		ISetting& operator=(ISetting&&) = delete;
 
-		[[nodiscard]] static inline std::vector<ISetting*>& get_settings() noexcept
+		[[nodiscard]] static std::vector<ISetting*>& get_settings() noexcept
 		{
 			static std::vector<ISetting*> settings;
 			return settings;
@@ -45,7 +45,7 @@ namespace AutoTOML
 
 		[[nodiscard]] constexpr const string_t& group() const noexcept { return _group; }
 		[[nodiscard]] constexpr const string_t& key() const noexcept { return _key; }
-		inline void load(const toml::table& a_table) { do_load(a_table); }
+		void load(const toml::table& a_table) { do_load(a_table); }
 		[[nodiscard]] toml::node_type type() const noexcept { return do_type(); }
 
 	protected:
@@ -79,7 +79,7 @@ namespace AutoTOML
 			tSetting(const tSetting&) = delete;
 			tSetting(tSetting&&) = delete;
 
-			inline tSetting(string_t a_group, string_t a_key, value_type a_value) :
+			tSetting(string_t a_group, string_t a_key, value_type a_value) :
 				super(std::move(a_group), std::move(a_key)),
 				_value(std::move(a_value))
 			{}
@@ -116,7 +116,7 @@ namespace AutoTOML
 			[[nodiscard]] constexpr const_reference get() const noexcept { return _value; }
 
 		protected:
-			inline void do_load(const toml::table& a_table) override
+			void do_load(const toml::table& a_table) override
 			{
 				const auto& node = a_table[group()][key()];
 				const auto val = node.as<value_type>();
